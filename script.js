@@ -25,28 +25,49 @@ chatForm.addEventListener('submit', async (event) => {
   // Clear the input field
   userInput.value = '';
 
-  // Send a POST request to the OpenAI API
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST', // We are POST-ing data to the API
-    headers: {
-      'Content-Type': 'application/json', // Set the content type to JSON
-      'Authorization': `Bearer ${apiKey}` // Include the API key for authorization
-    },
-    // Send model details and entire conversation history
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: conversationHistory // Send all previous messages
-    })
-  });
-  // Parse and store the response data
-  const result = await response.json();
+  // Use try/catch to handle errors (for beginners, this is the simplest way)
+  try {
+    // Send a POST request to the OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST', // We are POST-ing data to the API
+      headers: {
+        'Content-Type': 'application/json', // Set the content type to JSON
+        'Authorization': `Bearer ${apiKey}` // Include the API key for authorization
+      },
+      // Send model details and entire conversation history
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: conversationHistory, // Send all previous messages
+        max_completion_tokens: 800, // Limit the response length to avoid excessive output
+        temperature: 0.5, // Set the temperature for response variability
+        frequency_penalty: 0.8, // Apply a frequency penalty to reduce repetition
+      })
+    });
 
-  // Get the AI's response
-  const aiResponse = result.choices[0].message.content;
+    // Parse and store the response data
+    const result = await response.json();
 
-  // Add AI response to conversation history
-  conversationHistory.push({ role: 'assistant', content: aiResponse });
+    // Check if the API returned an error
+    if (result.error) {
+      // Show a friendly error message to the user
+      responseContainer.textContent = 'Sorry, something went wrong. Please try again.';
+      // Log the error for debugging
+      console.error(result.error);
+      return;
+    }
 
-  // Display the AI's response on the page
-  responseContainer.textContent = aiResponse;
+    // Get the AI's response
+    const aiResponse = result.choices[0].message.content;
+
+    // Add AI response to conversation history
+    conversationHistory.push({ role: 'assistant', content: aiResponse });
+
+    // Display the AI's response on the page
+    responseContainer.textContent = aiResponse;
+  } catch (error) {
+    // Show a friendly error message to the user
+    responseContainer.textContent = 'Sorry, something went wrong. Please try again.';
+    // Log the error for debugging
+    console.error(error);
+  }
 });
